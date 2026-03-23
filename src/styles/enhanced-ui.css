@@ -1,0 +1,493 @@
+/**
+ * Enhanced UI styles for modern animations and effects
+ * Author: M.H. Nishan Sathsara
+ * Project: AI-Powered UI Component Generator
+ */
+
+/* Modern button hover effects */
+.btn-glow {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.btn-glow::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: width 0.6s, height 0.6s;
+  transform: translate(-50%, -50%);
+}
+
+.btn-glow:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Card hover effects */
+.card-hover {
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.card-hover:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
+
+/* Floating elements */
+.floating {
+  animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Enhanced floating animation for loading particles */
+.animate-float {
+  animation: floatParticle 4s ease-in-out infinite;
+}
+
+@keyframes floatParticle {
+  0%, 100% { 
+    transform: translateY(0px) translateX(0px) rotate(0deg);
+    opacity: 0.3;
+  }
+  25% { 
+    transform: translateY(-20px) translateX(10px) rotate(90deg);
+    opacity: 0.6;
+  }
+  50% { 
+    transform: translateY(-10px) translateX(-5px) rotate(180deg);
+    opacity: 1;
+  }
+  75% { 
+    transform: translateY(-30px) translateX(-10px) rotate(270deg);
+    opacity: 0.4;
+  }
+}
+
+/* Loading spinner glow effect */
+.loading-spinner {
+  filter: drop-shadow(0 0 10px rgba(59, 130, 246, 0.5));
+}
+
+/* Centered loading spinner with perfect alignment */
+.spinner-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.spinner-ring {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.spinner-ring-outer {
+  width: 96px;
+  height: 96px;
+  top: 0;
+  left: 0;
+}
+
+.spinner-ring-middle {
+  width: 72px;
+  height: 72px;
+  top: 12px;
+  left: 12px;
+}
+
+.spinner-ring-inner {
+  width: 48px;
+  height: 48px;
+  top: 24px;
+  left: 24px;
+}
+
+.spinner-center-dot {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Progress bar animation */
+.progress-bar {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Code generation specific animations */
+.code-gen-loader {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Pulsing code elements */
+@keyframes codePulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.95);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+.code-symbol {
+  animation: codePulse 2s ease-in-out infinite;
+}
+
+/* Enhanced backdrop blur for mobile */
+@supports (-webkit-backdrop-filter: blur(10px)) or (backdrop-filter: blur(10px)) {
+  .backdrop-blur-enhanced {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+}
+
+/* Gradient text animation */
+.gradient-text {
+  background: linear-gradient(-45deg, #3b82f6, #8b5cf6, #ec4899, #f59e0b);
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradientShift 4s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Neon glow effect */
+.neon-glow {
+  text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor;
+  animation: neonPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes neonPulse {
+  from { text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 20px currentColor; }
+  to { text-shadow: 0 0 2px currentColor, 0 0 5px currentColor, 0 0 10px currentColor; }
+}
+
+/* Morphing shapes */
+.morph-shape {
+  border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%;
+  animation: morph 8s ease-in-out infinite;
+}
+
+@keyframes morph {
+  0%, 100% { border-radius: 60% 40% 30% 70% / 60% 30% 70% 40%; }
+  25% { border-radius: 30% 60% 70% 40% / 50% 60% 30% 60%; }
+  50% { border-radius: 50% 60% 30% 60% / 30% 60% 70% 40%; }
+  75% { border-radius: 60% 40% 60% 30% / 70% 30% 40% 60%; }
+}
+
+/* Particle effects */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particle-float 3s linear infinite;
+}
+
+@keyframes particle-float {
+  0% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100px) scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Interactive ripple effect */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1);
+  transition: transform 0.6s, opacity 0.6s;
+}
+
+.ripple:active::after {
+  transform: translate(-50%, -50%) scale(50);
+  opacity: 0;
+}
+
+/* Glass morphism */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.glass-card-dark {
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Loading spinner variations */
+.spinner-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.spinner-dots div {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: spinner-pulse 1.4s ease-in-out infinite both;
+}
+
+.spinner-dots div:nth-child(1) { animation-delay: -0.32s; }
+.spinner-dots div:nth-child(2) { animation-delay: -0.16s; }
+.spinner-dots div:nth-child(3) { animation-delay: 0s; }
+
+@keyframes spinner-pulse {
+  0%, 80%, 100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
+}
+
+/* Typing animation */
+.typing::after {
+  content: '|';
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* Smooth page transitions */
+.page-transition {
+  animation: fadeSlideIn 0.6s ease-out;
+}
+
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Interactive focus states */
+.focus-glow:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4);
+  animation: focusPulse 2s ease-in-out infinite;
+}
+
+@keyframes focusPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.4); }
+  50% { box-shadow: 0 0 0 6px rgba(59, 130, 246, 0.2); }
+}
+
+/* Stagger animations for lists */
+.stagger-children > * {
+  animation: staggerFade 0.6s ease-out backwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+
+@keyframes staggerFade {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Futuristic button effects with GSAP enhancements */
+.btn-futuristic {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-futuristic::before {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  right: -2px;
+  bottom: -2px;
+  background: linear-gradient(45deg, transparent, rgba(59, 130, 246, 0.4), transparent);
+  border-radius: inherit;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.btn-futuristic:hover::before {
+  opacity: 1;
+  animation: borderGlow 2s linear infinite;
+}
+
+@keyframes borderGlow {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Particle system for button effects */
+.particle-burst {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  animation: particleBurst 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes particleBurst {
+  0% {
+    transform: scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Energy wave effect */
+.energy-wave {
+  position: absolute;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-radius: inherit;
+  animation: energyPulse 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+@keyframes energyPulse {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Enhanced particle loader animations */
+.particle-loader-core {
+  filter: drop-shadow(0 0 10px currentColor) drop-shadow(0 0 20px currentColor);
+}
+
+.particle-loader-ring {
+  animation: particleRingPulse 2s ease-in-out infinite;
+}
+
+@keyframes particleRingPulse {
+  0%, 100% {
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.2;
+  }
+}
+
+/* Magnetic field effect for particles */
+.magnetic-particle {
+  animation: magneticFloat 3s ease-in-out infinite;
+}
+
+@keyframes magneticFloat {
+  0%, 100% {
+    transform: translateX(0) translateY(0) scale(1);
+    filter: brightness(1);
+  }
+  25% {
+    transform: translateX(5px) translateY(-3px) scale(1.1);
+    filter: brightness(1.3);
+  }
+  50% {
+    transform: translateX(-3px) translateY(5px) scale(0.9);
+    filter: brightness(0.8);
+  }
+  75% {
+    transform: translateX(-5px) translateY(-3px) scale(1.1);
+    filter: brightness(1.2);
+  }
+}
+
+/* Magnetic buttons */
+.magnetic {
+  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.magnetic:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.magnetic:active {
+  transform: translateY(0) scale(0.98);
+}
+
+/* Responsive animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Dark mode specific enhancements */
+@media (prefers-color-scheme: dark) {
+  .auto-glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+  }
+}

@@ -1,0 +1,534 @@
+/**
+ * Enhanced Editable code display panel with template support and advanced features
+ * 
+ * Author: M.H. Nishan Sathsara
+ * Project: AI-Powered UI Component Generator
+ */
+
+
+import React, { useState, useEffect, useMemo } from 'react';
+import { copyToClipboard } from '../../utils/clipboard.js';
+import { useTheme } from '../../contexts/ThemeContext.jsx';
+import { validateReactSyntax, getSyntaxFixSuggestions } from '../../utils/syntaxValidator.js';
+import AICodeEditor from './AICodeEditor.jsx';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+
+const CodeDisplay = ({ generatedCode, codeRef, onCodeChange, onSaveComponent, user, isFullPageMode = false, apiProvider = "puter", selectedModel = "gpt-4o" }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [showAIEditor, setShowAIEditor] = useState(false);
+  const [editableCode, setEditableCode] = useState(generatedCode);
+  const [validationErrors, setValidationErrors] = useState([]);
+  const [validationWarnings, setValidationWarnings] = useState([]);
+  const [syntaxSuggestions, setSyntaxSuggestions] = useState([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+  // Export dropdown state
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  // Close dropdown on click outside
+  useEffect(() => {
+    if (!showExportDropdown) return;
+    const handleClick = (e) => {
+      // Only close if click is outside the export dropdown
+      if (!e.target.closest('.relative')) setShowExportDropdown(false);
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [showExportDropdown]);
+  
+  // Use theme with error boundary
+  let isDarkMode = false;
+  try {
+    const theme = useTheme();
+    isDarkMode = theme.isDarkMode;
+  } catch (error) {
+    console.warn('Theme context not available, using light mode as fallback');
+  }
+
+  // Real-time validation with debouncing
+  const validateCode = useMemo(() => {
+    const debounce = (func, delay) => {
+      let timeoutId;
+      return (...args) => {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => func.apply(this, args), delay);
+      };
+    };
+
+    return debounce((code) => {
+      // Use the new comprehensive syntax validator
+      const syntaxValidation = validateReactSyntax(code);
+      
+      setValidationErrors(syntaxValidation.errors);
+      setValidationWarnings(syntaxValidation.warnings);
+      setSyntaxSuggestions(getSyntaxFixSuggestions(syntaxValidation));
+      
+      // Additional basic validation for backwards compatibility
+      const additionalErrors = [];
+      
+      if (code) {
+        // Check for event handler issues (enhanced)
+        const eventHandlers = code.match(/on\w+\s*=\s*\{[^}]*\}/g) || [];
+        eventHandlers.forEach(handler => {
+          if (handler.includes('()') && !handler.includes('=>')) {
+            const functionName = handler.match(/\{(\w+)\(/)?.[1];
+            if (functionName && !code.includes(`const ${functionName}`) && 
+                !code.includes(`function ${functionName}`)) {
+              additionalErrors.push(`Function '${functionName}' is called but not defined`);
+            }
+          }
+        });
+      }
+      
+      // Merge additional errors with syntax validation errors
+      setValidationErrors([...syntaxValidation.errors, ...additionalErrors]);
+    }, 300);
+  }, []);
+
+  // Update editable code when generated code changes
+  useEffect(() => {
+    setEditableCode(generatedCode);
+  }, [generatedCode]);
+
+  // Enhanced code change handler with validation
+  const handleCodeChange = async (e) => {
+    const newCode = e.target.value;
+    setEditableCode(newCode);
+    setIsProcessing(true);
+    
+    try {
+      // Run validation
+      validateCode(newCode);
+      
+      // Live update preview while typing
+      onCodeChange && onCodeChange(newCode);
+    } catch (error) {
+      console.error('Code processing error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleCopyCode = () => {
+    const codeToSave = isEditing ? editableCode : generatedCode;
+    copyToClipboard(codeToSave, 'copy-button', codeRef.current);
+  };
+
+  // Export as .jsx file
+  const handleDownloadCode = () => {
+    const code = isEditing ? editableCode : generatedCode;
+    const blob = new Blob([code], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'GeneratedComponent.jsx';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Export as ZIP file
+  const handleExportZip = async () => {
+    const code = isEditing ? editableCode : generatedCode;
+    const zip = new JSZip();
+    zip.file('GeneratedComponent.jsx', code);
+    // Optionally add a README
+    zip.file('README.md', '# Exported React Component\n\nThis file was generated by the AI-Powered UI Component Generator.');
+    const content = await zip.generateAsync({ type: 'blob' });
+    saveAs(content, 'react-component.zip');
+  };
+
+  const handleEditToggle = () => {
+    if (isEditing) {
+      // Save changes when exiting edit mode
+      onCodeChange && onCodeChange(editableCode);
+    }
+    setIsEditing(!isEditing);
+  };
+
+  const handleReset = () => {
+    setEditableCode(generatedCode);
+    onCodeChange && onCodeChange(generatedCode);
+  };
+
+  // Handle AI Editor toggle
+  const handleAIEditorToggle = () => {
+    setShowAIEditor(!showAIEditor);
+  };
+
+  // Handle AI code changes
+  const handleAICodeChange = (newCode) => {
+    setEditableCode(newCode);
+    onCodeChange && onCodeChange(newCode);
+  };
+
+  const handleSaveComponent = async () => {
+    if (onSaveComponent) {
+      const result = await onSaveComponent();
+      if (result && result.success) {
+        // Show success feedback
+        const saveButton = document.getElementById('save-component-button');
+        if (saveButton) {
+          const originalText = saveButton.innerHTML;
+          saveButton.innerHTML = `
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Saved!
+          `;
+          saveButton.className = saveButton.className.replace(/bg-green-\d+/, 'bg-green-500');
+          
+          setTimeout(() => {
+            saveButton.innerHTML = originalText;
+            saveButton.className = saveButton.className.replace(/bg-green-500/, isDarkMode ? 'bg-green-700' : 'bg-green-600');
+          }, 2000);
+        }
+      }
+    }
+  };
+
+  // Render validation errors, warnings, and suggestions
+  const renderValidationFeedback = () => {
+    if (validationErrors.length === 0 && validationWarnings.length === 0 && syntaxSuggestions.length === 0) {
+      return null;
+    }
+    
+    return (
+      <div className="mb-4 space-y-3">
+        {/* Errors */}
+        {validationErrors.length > 0 && (
+          <div className={`p-3 rounded-md border ${
+            isDarkMode 
+              ? 'bg-red-900/20 border-red-800 text-red-300' 
+              : 'bg-red-50 border-red-200 text-red-700'
+          }`}>
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className={`w-5 h-5 ${isDarkMode ? 'text-red-400' : 'text-red-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h4 className="text-sm font-medium mb-1">Syntax Errors:</h4>
+                <ul className="text-sm space-y-1">
+                  {validationErrors.map((error, index) => (
+                    <li key={index} className="flex items-center">
+                      <span className={`w-1 h-1 rounded-full mr-2 ${
+                        isDarkMode ? 'bg-red-500' : 'bg-red-500'
+                      }`}></span>
+                      {error}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Warnings */}
+        {validationWarnings.length > 0 && (
+          <div className={`p-3 rounded-md border ${
+            isDarkMode 
+              ? 'bg-yellow-900/20 border-yellow-800 text-yellow-300' 
+              : 'bg-yellow-50 border-yellow-200 text-yellow-700'
+          }`}>
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className={`w-5 h-5 ${isDarkMode ? 'text-yellow-400' : 'text-yellow-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h4 className="text-sm font-medium mb-1">Code Warnings:</h4>
+                <ul className="text-sm space-y-1">
+                  {validationWarnings.map((warning, index) => (
+                    <li key={index} className="flex items-center">
+                      <span className={`w-1 h-1 rounded-full mr-2 ${
+                        isDarkMode ? 'bg-yellow-500' : 'bg-yellow-500'
+                      }`}></span>
+                      {warning}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Suggestions */}
+        {syntaxSuggestions.length > 0 && (
+          <div className={`p-3 rounded-md border ${
+            isDarkMode 
+              ? 'bg-blue-900/20 border-blue-800 text-blue-300' 
+              : 'bg-blue-50 border-blue-200 text-blue-700'
+          }`}>
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <svg className={`w-5 h-5 ${isDarkMode ? 'text-blue-400' : 'text-blue-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <h4 className="text-sm font-medium mb-1">💡 Suggestions:</h4>
+                <ul className="text-sm space-y-1">
+                  {syntaxSuggestions.map((suggestion, index) => (
+                    <li key={index} className="flex items-center">
+                      <span className={`w-1 h-1 rounded-full mr-2 ${
+                        isDarkMode ? 'bg-blue-500' : 'bg-blue-500'
+                      }`}></span>
+                      {suggestion}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Dynamic height based on full page mode - Mobile Responsive
+  const getCodeDisplayHeight = () => {
+    return isFullPageMode 
+      ? 'h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[720px]' 
+      : 'h-[250px] sm:h-[300px] md:h-[400px] lg:h-[450px] xl:h-[520px]';
+  };
+
+  const getCardHeight = () => {
+    return isFullPageMode 
+      ? 'h-[380px] sm:h-[480px] md:h-[580px] lg:h-[680px] xl:h-[800px]' 
+      : 'h-[330px] sm:h-[380px] md:h-[480px] lg:h-[530px] xl:h-[600px]';
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Enhanced Header with Template Support */}
+      <div className="flex items-center justify-between">
+        <h3 className={`text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+          Generated Code
+          {isEditing && (
+            <span className={`ml-2 text-sm ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+              (Live Editing)
+            </span>
+          )}
+        </h3>
+        <div className="flex items-center space-x-2">
+
+          {/* Processing Indicator */}
+          {isProcessing && (
+            <div className="flex items-center space-x-2">
+              <div className={`animate-spin rounded-full h-4 w-4 border-2 border-t-transparent ${
+                isDarkMode ? 'border-blue-400' : 'border-blue-500'
+              }`}></div>
+              <span className={`text-sm ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                Processing...
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Validation Feedback */}
+      {renderValidationFeedback()}
+
+      {/* AI Code Editor */}
+      <AICodeEditor
+        currentCode={editableCode || generatedCode}
+        onCodeChange={handleAICodeChange}
+        apiProvider={apiProvider}
+        selectedModel={selectedModel}
+        isVisible={showAIEditor}
+        onToggle={handleAIEditorToggle}
+      />
+
+      {/* Code Editor */}
+      <div className={`rounded-lg shadow-lg border transition-colors duration-300 ${getCardHeight()} flex flex-col ${
+        isDarkMode 
+          ? 'bg-gray-800 border-gray-700' 
+          : 'bg-white border-gray-200'
+      }`}>
+        <div className={`px-3 sm:px-4 lg:px-6 py-3 sm:py-4 border-b rounded-t-lg flex-shrink-0 transition-colors duration-300 ${
+          isDarkMode 
+            ? 'bg-gray-850 border-gray-700' 
+            : 'bg-gray-50 border-gray-200'
+        }`}>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
+            <h3 className={`text-base sm:text-lg font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>
+              Code Editor
+              {isEditing && (
+                <span className={`ml-2 text-xs sm:text-sm ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}>
+                  (Live Editing)
+                </span>
+              )}
+            </h3>
+            <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
+              {/* AI Editor Toggle Button */}
+              <button
+                onClick={handleAIEditorToggle}
+                className={`text-white text-xs sm:text-sm font-medium py-1 sm:py-1.5 px-2 sm:px-3 rounded-md transition-colors flex items-center gap-1 ${
+                  showAIEditor
+                    ? isDarkMode 
+                      ? 'bg-purple-600 hover:bg-purple-500' 
+                      : 'bg-purple-600 hover:bg-purple-700'
+                    : isDarkMode 
+                      ? 'bg-purple-700 hover:bg-purple-600' 
+                      : 'bg-purple-600 hover:bg-purple-700'
+                }`}
+                title="AI-powered code editing"
+              >
+                <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                <span className="hidden xs:inline">AI Edit</span>
+              </button>
+
+              {isEditing && (
+                <button
+                  onClick={handleReset}
+                  className={`text-white text-xs sm:text-sm font-medium py-1 sm:py-1.5 px-2 sm:px-3 rounded-md transition-colors flex items-center gap-1 ${
+                    isDarkMode 
+                      ? 'bg-gray-600 hover:bg-gray-500' 
+                      : 'bg-gray-500 hover:bg-gray-600'
+                  }`}
+                >
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span className="hidden xs:inline">Reset</span>
+                </button>
+              )}
+              {user && (
+                <button
+                  id="save-component-button"
+                  onClick={handleSaveComponent}
+                  className={`text-white text-xs sm:text-sm font-medium py-1 sm:py-1.5 px-2 sm:px-3 rounded-md transition-colors flex items-center gap-1 ${
+                    isDarkMode 
+                      ? 'bg-green-600 hover:bg-green-500' 
+                      : 'bg-green-600 hover:bg-green-700'
+                  }`}
+                >
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                  <span className="hidden xs:inline">Save</span>
+                </button>
+              )}
+              
+              <button
+                onClick={handleEditToggle}
+                className={`text-white text-xs sm:text-sm font-medium py-1 sm:py-1.5 px-2 sm:px-3 rounded-md transition-colors flex items-center gap-1 ${
+                  isEditing
+                    ? isDarkMode 
+                      ? 'bg-green-600 hover:bg-green-500' 
+                      : 'bg-green-600 hover:bg-green-700'
+                    : isDarkMode 
+                      ? 'bg-blue-600 hover:bg-blue-500' 
+                      : 'bg-blue-600 hover:bg-blue-700'
+                }`}
+              >
+                {isEditing ? (
+                  <>
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="hidden xs:inline">Save Changes</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span className="hidden xs:inline">Edit Code</span>
+                  </>
+                )}
+              </button>
+              
+              {/* Export Dropdown and Copy Button */}
+              <div className="flex items-center gap-1 sm:gap-2 relative">
+                <button
+                  id="copy-button"
+                  onClick={handleCopyCode}
+                  className={`text-white text-xs sm:text-sm font-medium py-1 sm:py-1.5 px-2 sm:px-3 rounded-md transition-colors flex items-center gap-1 ${
+                    isDarkMode 
+                      ? 'bg-indigo-600 hover:bg-indigo-500' 
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
+                >
+                  <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                  </svg>
+                  <span className="hidden xs:inline">Copy</span>
+                </button>
+                {/* Export Dropdown */}
+                <div className="relative">
+                  <button
+                    onClick={() => setShowExportDropdown((prev) => !prev)}
+                    className={`text-white text-xs sm:text-sm font-medium py-1 sm:py-1.5 px-2 sm:px-3 rounded-md transition-colors flex items-center gap-1 ${
+                      isDarkMode 
+                        ? 'bg-purple-600 hover:bg-purple-500' 
+                        : 'bg-purple-600 hover:bg-purple-700'
+                    }`}
+                  >
+                    <svg className="w-3 h-3 sm:w-4 sm:h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Export
+                    <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {showExportDropdown && (
+                    <div className={`absolute right-0 mt-2 w-36 rounded-md shadow-lg z-20 ${isDarkMode ? 'bg-gray-800 border border-gray-700' : 'bg-white border border-gray-200'}`}>
+                      <button
+                        onClick={() => { setShowExportDropdown(false); handleDownloadCode(); }}
+                        className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${isDarkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
+                      >
+                        Export as .jsx
+                      </button>
+                      <button
+                        onClick={() => { setShowExportDropdown(false); handleExportZip(); }}
+                        className={`block w-full text-left px-4 py-2 text-xs sm:text-sm ${isDarkMode ? 'hover:bg-gray-700 text-white' : 'hover:bg-gray-100 text-gray-900'}`}
+                      >
+                        Export as ZIP
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div className={`flex-1 overflow-hidden ${
+          isDarkMode ? 'bg-gray-900' : 'bg-gray-50'
+        }`}>
+          {isEditing ? (
+            <textarea
+              ref={codeRef}
+              value={editableCode}
+              onChange={handleCodeChange}
+              className={`w-full ${getCodeDisplayHeight()} p-3 sm:p-4 lg:p-6 font-mono text-xs sm:text-sm resize-none focus:outline-none border-0 transition-colors duration-300 ${
+                isDarkMode 
+                  ? 'bg-gray-900 text-gray-100' 
+                  : 'bg-white text-gray-800'
+              }`}
+              placeholder="Your component code will appear here..."
+            />
+          ) : (
+            <pre className={`w-full ${getCodeDisplayHeight()} p-3 sm:p-4 lg:p-6 overflow-auto font-mono text-xs sm:text-sm transition-colors duration-300 custom-scrollbar ${
+              isDarkMode 
+                ? 'bg-gray-900 text-gray-100' 
+                : 'bg-white text-gray-800'
+            }`}>
+              <code>{editableCode || generatedCode || 'Your component code will appear here...'}</code>
+            </pre>
+          )}
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+export default CodeDisplay;

@@ -1,0 +1,160 @@
+/**
+ * App Component Styles for AI-Powered UI Component Generator
+ * 
+ * This file contains component-specific styles for the main App component.
+ * Most styling is handled by Tailwind CSS classes, but some custom styles
+ * may be defined here for specific needs.
+ * 
+ * Author: M.H. Nishan Sathsara
+ * Project: AI-Powered UI Component Generator
+ */
+
+/* App container - enhanced with modern styling */
+.App {
+  min-height: 100vh;
+  width: 100%;
+  /* Background will be handled by Tailwind classes in App.jsx */
+}
+
+/* Custom animations and transitions */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Utility classes for animations */
+.fade-in {
+  animation: fadeIn 0.5s ease-out;
+}
+
+.slide-up {
+  animation: slideUp 0.6s ease-out;
+}
+
+.pulse-animation {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Code syntax highlighting with dark mode support */
+.code-highlight {
+  background-color: var(--color-code-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 0.5rem;
+  overflow-x: auto;
+}
+
+.code-highlight code {
+  color: var(--color-text-primary);
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+/* Keywords */
+.code-highlight .keyword {
+  color: #7c3aed;
+  font-weight: 600;
+}
+
+/* Strings */
+.code-highlight .string {
+  color: #059669;
+}
+
+/* Comments */
+.code-highlight .comment {
+  color: #6b7280;
+  font-style: italic;
+}
+
+/* Numbers */
+.code-highlight .number {
+  color: #dc2626;
+}
+
+/* Functions */
+.code-highlight .function {
+  color: #2563eb;
+}
+
+/* Variables */
+.code-highlight .variable {
+  color: #7c2d12;
+}
+
+/* Custom focus states for better accessibility */
+.custom-focus:focus {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Loading state styles */
+.loading-overlay {
+  position: relative;
+}
+
+.loading-overlay::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .App {
+    padding: 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .App {
+    padding: 0.25rem;
+  }
+}
+
+/* Print styles for documentation */
+@media print {
+  .App {
+    background: white !important;
+    color: black !important;
+  }
+  
+  .no-print,
+  button,
+  .bg-gradient-to-br {
+    display: none !important;
+  }
+}
